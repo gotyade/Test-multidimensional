@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lector de resultados · Test multidimensional</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f5f6f8;--card:#fff;--tx:#1d2330;--mut:#5d6677;--ac:#2f5d9e;--bd:#d9dde5;--ok:#2e7d4f;--wn:#b7791f;--bad:#b3261e;color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171d;--card:#1d222b;--tx:#e8ebf1;--mut:#9aa3b3;--ac:#7fa8e6;--bd:#333a47;--ok:#6cc18d;--wn:#e3b05a;--bad:#f08a82;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171d;--card:#1d222b;--tx:#e8ebf1;--mut:#9aa3b3;--ac:#7fa8e6;--bd:#333a47;--ok:#6cc18d;--wn:#e3b05a;--bad:#f08a82;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:.3em 0}h2{font-size:1.15rem;margin:0 0 .3em;color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin:14px 0}
+.mut{color:var(--mut);font-size:.92rem}
+label.f{display:block;margin:8px 0;font-size:.9rem}
+input[type=text],input[type=number],input[type=date]{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.q{padding:10px 0;border-top:1px solid var(--bd)}
+.q p{margin:0 0 6px;font-weight:500}.q.miss{background:rgba(179,38,30,.1)}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts label{flex:1 1 120px;border:1px solid var(--bd);border-radius:8px;padding:6px 8px;font-size:.85rem;cursor:pointer;display:flex;gap:6px;align-items:center}
+.opts input:checked+span{font-weight:700;color:var(--ac)}
+button{font:inherit;border:0;border-radius:10px;padding:12px 20px;background:var(--ac);color:#fff;cursor:pointer;font-weight:600}
+button.sec{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.85rem;font-weight:600;border:1px solid currentColor}
+.l0{color:var(--ok)}.l1{color:var(--wn)}.l2{color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left}
+.tw{overflow-x:auto}
+.alert{border:2px solid var(--bad);border-radius:10px;padding:10px 14px;margin:10px 0}
+.alert.w{border-color:var(--wn)}
+#report{display:none}
+.sum{border:2px solid var(--tx);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sum th,.sum td{border:1px solid var(--bd);padding:5px 9px;font-size:.88rem}
+.sum thead th{text-align:center;background:var(--bg)}
+.sum tbody{border-top:2px solid var(--tx)}
+.sum .ts{font-weight:700;vertical-align:top;background:var(--bg)}
+.sum .dm{vertical-align:middle;font-weight:500}
+.sum .sh td{text-align:center;font-size:.8rem;color:var(--mut);background:var(--bg)}
+.sum .on{font-weight:700}
+.sum .on.k0{background:rgba(46,125,79,.22);color:var(--ok)}
+.sum .on.k1{background:rgba(214,150,30,.25);color:var(--wn)}
+.sum .on.k2{background:rgba(179,38,30,.2);color:var(--bad)}
+.sum .on.kn{background:rgba(47,93,158,.2);color:var(--ac)}
+.sum .sc{float:right;margin-left:12px}
+.sum .bf{text-align:center}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+@media print{
+ body{background:#fff;color:#000;font-size:11pt}
+ :root{--card:#fff;--bd:#bbb;--tx:#000;--mut:#444;--ac:#1f4378;--ok:#1d6a3d;--wn:#8a5a00;--bad:#9b1c14}
+ #loadWrap,.actions{display:none!important}
+ #report{display:block!important}
+ main{padding:0;max-width:none}
+ .card{break-inside:avoid;border-radius:0}
+}
+</style>
+</head>
+<body>
+<main>
+<div id="loadWrap">
+<h1>Lector de resultados · Test multidimensional</h1>
+<div class="card"><p>Pega aquí el texto generado por el cuestionario del consultante. Se calcularán los resultados y podrás exportarlos a PDF. El texto se procesa solo en tu navegador.</p>
+<textarea id="paste" rows="8" placeholder="Pega aquí el texto…" style="width:100%;font:13px/1.4 ui-monospace,Consolas,monospace;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)"></textarea>
+<div class="actions"><button id="gen">Generar resultados</button></div>
+<p id="err" style="color:var(--bad)"></p></div></div>
+<div id="report"></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const OPT={
+ bfi:["Muy en desacuerdo","Un poco en desacuerdo","Neutral","Un poco de acuerdo","Muy de acuerdo"],
+ freq:["Para nada","Algunos días","Más de la mitad de los días","Casi todos los días"],
+ dass:["No me ha ocurrido","Me ha ocurrido un poco","Me ha ocurrido varias veces","Me ha ocurrido mucho"],
+ sdrs:["Nunca","Rara vez","Varias veces","Siempre"]};
+const B=[
+{id:"bfi",t:"Bloque 1: Rasgos de personalidad (BFI-10)",ins:"Indica tu nivel de acuerdo con cada frase. Yo soy alguien que…",o:"bfi",base:1,q:["Es reservado/a","Es digno/a de confianza","Tiende a ser perezoso/a","Es relajado/a, maneja bien el estrés","Tiene pocos intereses artísticos","Es extrovertido/a, sociable","Tiende a criticar a los demás","Hace un trabajo minucioso","Se pone nervioso/a fácilmente","Tiene una imaginación activa"]},
+{id:"phq",t:"Bloque 2a: Estado de ánimo (PHQ-9)",ins:"¿Con qué frecuencia has sentido lo siguiente en las últimas 2 semanas?",o:"freq",base:0,q:["Poco interés o alegría por hacer las cosas.","Sensación de estar decaído/a, deprimido/a o sin esperanzas.","Problemas para dormir o para mantenerse dormido/a, o dormir demasiado.","Sensación de cansancio o de tener poca energía.","Poco apetito o comer en exceso.","Sentirse mal consigo mismo/a, sentir que es un fracaso o que ha decepcionado a su familia o a sí mismo/a.","Dificultad para concentrarse en cosas como leer el periódico o ver la televisión.","Moverse o hablar tan lentamente que otras personas podrían notarlo, o lo contrario: estar tan inquieto/a o agitado/a que se ha estado moviendo mucho más de lo normal.","Pensamientos de que estaría mejor muerto/a o de lastimarse de alguna manera."]},
+{id:"gad",t:"Bloque 2b: Ansiedad (GAD-7)",ins:"¿Con qué frecuencia has sentido lo siguiente en las últimas 2 semanas?",o:"freq",base:0,q:["Sentirse nervioso/a, ansioso/a o con los nervios de punta.","No poder dejar de preocuparse o no poder controlar la preocupación.","Preocuparse demasiado por diferentes cosas.","Dificultad para relajarse.","Estar tan inquieto/a que es difícil permanecer sentado/a tranquilamente.","Sentirse irritable o molestarse fácilmente.","Sentir miedo como si algo terrible pudiera suceder."]},
+{id:"dass",t:"Bloque 3: Estados psicosomáticos y estrés (DASS-21)",ins:"Marca la opción que mejor describa tu situación durante las últimas 4 semanas.",o:"dass",base:0,q:["Me costó mucho descargar la tensión.","Me di cuenta de que tenía la boca seca.","No podía sentir nada positivo.","Se me hizo difícil respirar (jadeo o falta de aire sin haber hecho esfuerzo físico).","Se me hizo difícil tomar la iniciativa para hacer cosas.","Reaccioné exageradamente en ciertas situaciones.","Sentí que mis manos temblaban.","Sentí que estaba gastando mucha energía en poco tiempo.","Estaba preocupado/a por situaciones en las cuales podía tener pánico o sentirme ridículo/a.","Sentí que no tenía nada por qué vivir.","Noté que me agitaba.","Se me hizo difícil relajarme.","Me sentí triste y deprimido/a.","No toleré nada que no me permitiera continuar con lo que estaba haciendo.","Sentí que estaba al punto de tener un ataque de pánico.","No pude entusiasmarme con nada.","Sentí que valía muy poco como persona.","Sentí que estaba muy sensible.","Sentí los latidos de mi corazón a pesar de no haber hecho esfuerzo físico.","Tuve miedo sin razón alguna.","Sentí que la vida no tenía ningún sentido."]},
+{id:"sdrs",t:"Bloque 4: Adaptación y funcionalidad (SDRS)",ins:"Marca la opción que mejor describa tu situación durante las últimas 4 semanas.",o:"sdrs",base:1,q:["He podido realizar mis tareas (estudios o trabajo) a tiempo y con un nivel de calidad adecuado.","Me he sentido interesado/a y motivado/a por mis estudios o mi trabajo actual.","He tenido fricciones, discusiones o conflictos con mis compañeros (de clase o trabajo).","He participado en actividades sociales, fiestas o reuniones con amigos.","He podido hablar abiertamente y compartir mis sentimientos con mis amigos cercanos.","Me he sentido solo/a o alejado/a de los demás, incluso cuando estoy con gente.","He tenido discusiones constantes o problemas de comunicación con mis padres o familiares cercanos.","He dependido demasiado de los demás para tomar mis propias decisiones.","He dedicado tiempo a mis pasatiempos, hobbies o actividades que me divierten.","Me he sentido capaz de manejar los problemas cotidianos que se me presentan.","He evitado situaciones sociales por miedo a sentirme incómodo/a o juzgado/a.","En general, me siento satisfecho/a con la forma en que me llevo con las personas que me rodean."]}];
+
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const lv=(v,cuts)=>{let i=cuts.findIndex(c=>v<=c);return i<0?cuts.length:i};
+const sum=(a,idx)=>idx.reduce((s,i)=>s+a[i-1],0);
+const sev=(i,n)=>i===0?0:(i<n-2?1:2); // color class
+
+function report(d){
+ const bfi=d.bfi,phq=d.phq,gad=d.gad,ds=d.dass,sd=d.sdrs;
+ // BFI
+ const rev=[1,3,4,5,7],r=(i)=>rev.includes(i)?6-bfi[i-1]:bfi[i-1];
+ const tr=[["Extroversión",1,6],["Afabilidad",2,7],["Responsabilidad",3,8],["Neuroticismo",4,9],["Flexibilidad",5,10]].map(([n,a,b])=>{const s=r(a)+r(b);return{n,s,l:s<=4?"Baja":s<=7?"Media":"Alta"}});
+ const neu=tr[3].s,resp=tr[2].s;
+ // PHQ / GAD
+ const P=phq.reduce((a,b)=>a+b,0),G=gad.reduce((a,b)=>a+b,0);
+ const pl=lv(P,[4,9,14,19]),gl=lv(G,[4,9,14]);
+ const pN=["Mínima o ausente","Leve","Moderada","Moderadamente grave","Grave"];
+ const pS=["No requiere tratamiento necesariamente.","Observación clínica y reevaluación posterior.","Considerar plan de tratamiento (psicoterapia o fármacos).","Requiere tratamiento activo (psicoterapia y/o fármacos).","Tratamiento intensivo inmediato."];
+ const gN=["Mínima","Leve","Moderada (punto de corte para posible diagnóstico)","Grave"];
+ // DASS
+ const D=2*sum(ds,[3,5,10,13,16,17,21]),A=2*sum(ds,[2,4,7,9,15,19,20]),E=2*sum(ds,[1,6,8,11,12,14,18]);
+ const dN=["Normal","Leve","Moderado","Severo","Extremo"];
+ const dl=[lv(D,[9,13,20,27]),lv(A,[7,9,14,19]),lv(E,[14,18,25,33])];
+ // SDRS
+ const srev=[3,6,7,8,11];
+ const S=sd.reduce((t,v,i)=>t+(srev.includes(i+1)?5-v:v),0);
+ const sl=S<=20?0:S<=30?1:2,sN=["Baja (desadaptación social significativa)","Media (adaptación moderada)","Alta (buena adaptación social y resiliencia)"];
+ // alertas
+ const al=[];
+ if(phq[8]>0)al.push(["bad","Alerta crítica: ítem 9 del PHQ-9 con respuesta “"+OPT.freq[phq[8]]+"”. Indica ideación de muerte o autolesión; requiere evaluación de riesgo suicida inmediata."]);
+ if(ds[9]>0||ds[20]>0)al.push(["bad","Alerta: respuestas positivas en los ítems 10 y/o 21 del DASS-21 (sentir que no hay nada por qué vivir / que la vida no tiene sentido). Explorar riesgo."]);
+ const co=[];
+ if(neu<=4&&dl[2]>=2)co.push("Se describe emocionalmente estable (Neuroticismo bajo, "+neu+"/10) pero puntúa estrés "+dN[dl[2]].toLowerCase()+" en DASS-21: posible falta de insight o negación; explorar.");
+ if(P>=15&&sl===2)co.push("PHQ-9 elevado ("+P+") con adaptación social alta (SDRS "+S+"): posible sobreesfuerzo agotador para “parecer normal” ante los demás.");
+ if(neu>=8&&resp>=8&&sl===2&&dl[2]>=2)co.push("Perfil de alta funcionalidad con costo emocional: Neuroticismo y Responsabilidad altos, estrés elevado y buena adaptación. Riesgo de que la funcionalidad colapse si no se interviene.");
+ const bd=(l,t,k)=>`<span class="badge l${k}">${t}</span>`;
+ const row=(a,b,c,d)=>`<tr><td>${a}</td><td>${b}</td><td>${c}</td>${d!==undefined?`<td>${d}</td>`:""}</tr>`;
+ const f=d.fecha||"";
+ $("#report").innerHTML=`
+ <div class="actions"><button id="pr">Imprimir / Guardar como PDF</button><button class="sec" id="bk">Cargar otro archivo</button></div>
+ <div class="card"><h1>Hoja de resultados: evaluación clínica multidimensional</h1>
+ <p><b>Nombre:</b> ${esc(d.nombre||"—")} &nbsp; <b>Edad:</b> ${esc(d.edad||"—")} &nbsp; <b>Sexo:</b> ${esc(d.sexo||"—")} &nbsp; <b>Fecha de aplicación:</b> ${esc(f?f.split("-").reverse().join("/"):"—")}</p>
+ <p class="mut">Consentimiento informado aceptado por el consultante al realizar el cuestionario. Menores de 18: requiere firma de madre, padre o tutor.</p></div>
+ ${al.map(a=>`<div class="alert"><b>⚠ ${a[1]}</b></div>`).join("")}
+ <div class="card"><h2>Resumen de respuestas</h2><div class="tw">${(()=>{
+ const sec=(test,dims)=>{const total=dims.reduce((a,d)=>a+d.list.length,0);let h="",first=true;
+  dims.forEach(d=>d.list.forEach((t,i)=>{const on=i===d.sel,k=d.ks?d.ks[i]:sev(i,d.list.length);
+   h+="<tr>"+(first?`<td rowspan="${total}" class="ts">${test}</td>`:"")+(i===0?`<td rowspan="${d.list.length}" class="dm">${d.n}</td>`:"")+`<td colspan="3" class="rg${on?" on k"+k:""}">${t}${on?`<span class="sc">◄ Puntaje: ${d.txt}</span>`:""}</td></tr>`;first=false}));
+  return `<tbody>${h}</tbody>`};
+ const bf=`<tbody>${tr.map((t,i)=>{const c=t.s<=4?0:t.s<=7?1:2;return "<tr>"+(i===0?`<td rowspan="5" class="ts">BFI-10</td>`:"")+`<td class="dm">${t.n}</td>`+[0,1,2].map(j=>`<td class="bf${j===c?" on kn":""}">${j===c?"● "+t.s:""}</td>`).join("")+"</tr>"}).join("")}</tbody>`;
+ return `<table class="sum"><thead><tr><th>Test</th><th>Dimensión</th><th colspan="3">Resultados</th></tr><tr class="sh"><td></td><td></td><td>2-4 (Baja)</td><td>5-7 (Media)</td><td>8-10 (Alta)</td></tr></thead>`+bf+
+  sec("PHQ-9",[{n:"Depresión",list:["0-4 (Mínima o ausente)","5-9 (Depresión leve)","10-14 (Depresión moderada)","15-19 (Depresión moderadamente grave)","20-27 (Depresión grave)"],sel:pl,txt:P}])+
+  sec("GAD-7",[{n:"Ansiedad cognitiva",list:["0-4 Ansiedad mínima","5-9 Ansiedad leve","10-14 Ansiedad moderada","15-21 Ansiedad grave"],sel:gl,txt:G}])+
+  sec("DASS-21",[{n:"Depresión",list:["Normal 0-9","Leve 10-13","Moderado 14-20","Severo 21-27","Extremo 28+"],sel:dl[0],txt:D},{n:"Ansiedad",list:["Normal 0-7","Leve 8-9","Moderado 10-14","Severo 15-19","Extremo 20+"],sel:dl[1],txt:A},{n:"Estrés",list:["Normal 0-14","Leve 15-18","Moderado 19-25","Severo 26-33","Extremo 34+"],sel:dl[2],txt:E}])+
+  sec("SDRS",[{n:"Funcionalidad social",list:["Baja 10-20","Media 21-30","Alta 31-40"],sel:sl,txt:S+"/48",ks:[2,1,0]}])+"</table>"})()}</div></div>
+ <div class="card"><h2>Interpretación</h2>
+ <p><b>Personalidad (BFI-10).</b> ${tr.map(t=>t.n+": "+t.s+" ("+t.l.toLowerCase()+")").join("; ")}. Puntuaciones altas en Neuroticismo indican vulnerabilidad al estrés; en Responsabilidad, capacidad de autorregulación.</p>
+ <p><b>PHQ-9: ${P}/27, depresión ${pN[pl].toLowerCase()}.</b> ${pS[pl]}</p>
+ <p><b>GAD-7: ${G}/21, ansiedad ${gN[gl].toLowerCase()}.</b></p>
+ <p><b>DASS-21 (puntajes ×2):</b> Depresión ${D} (${dN[dl[0]].toLowerCase()}), Ansiedad ${A} (${dN[dl[1]].toLowerCase()}), Estrés ${E} (${dN[dl[2]].toLowerCase()}).</p>
+ <p><b>SDRS: ${S}/48, adaptación ${sN[sl].toLowerCase()}.</b> A mayor puntuación, mejor adaptación.</p></div>
+ ${co.length?`<div class="card"><h2>Posibles contradicciones / pistas de validez</h2><ul>${co.map(c=>`<li>${c}</li>`).join("")}</ul></div>`:""}
+ <div class="card"><h2>Respuestas ítem a ítem</h2><div class="tw"><table>
+ ${B.map((b,bi)=>{const a=[bfi,phq,gad,ds,sd][bi];return `<tr><th colspan="2">${b.t}</th></tr>`+b.q.map((q,i)=>`<tr><td>${i+1}. ${q}</td><td>${OPT[b.o][a[i]-b.base]}</td></tr>`).join("")}).join("")}
+ </table></div></div>
+ <p class="mut">Esta herramienta de tamizaje no sustituye el juicio clínico ni constituye un diagnóstico. La interpretación corresponde al/la profesional de la psicología.</p>`;
+ $("#loadWrap").style.display="none";$("#report").style.display="block";window.scrollTo(0,0);
+ $("#pr").onclick=()=>window.print();
+ $("#bk").onclick=()=>{$("#report").style.display="none";$("#loadWrap").style.display="block";$("#paste").value=""};
+}
+
+const LEN={bfi:[10,1,5],phq:[9,0,3],gad:[7,0,3],dass:[21,0,3],sdrs:[12,1,4]};
+$("#gen").onclick=()=>{
+ const er=$("#err");er.textContent="";
+ try{
+  const t=$("#paste").value,i=t.indexOf("{");
+  if(i<0)throw 0;
+  const d=JSON.parse(t.slice(i,t.lastIndexOf("}")+1));
+  if(d.formato!=="TEST_MULTIDIMENSIONAL")throw 1;
+  for(const k in LEN){const[n,lo,hi]=LEN[k];if(!Array.isArray(d[k])||d[k].length!==n||d[k].some(v=>!Number.isInteger(v)||v<lo||v>hi))throw 2}
+  report(d);
+ }catch(x){er.textContent="No se pudo leer el texto: está incompleto, le faltan datos o no corresponde a este test."}
+};
+</script>
+</body>
+</html>
